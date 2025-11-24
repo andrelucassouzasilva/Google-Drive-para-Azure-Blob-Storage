@@ -34,11 +34,31 @@ npm install
 
 ## ⚙️ Configuração
 
-O arquivo `config.js` contém as seguintes configurações:
+### Variáveis de Ambiente (Recomendado)
 
-- **Azure Blob Storage**: Connection String, nome do contêiner (já configurado)
-- **Google Drive**: Caminho para o arquivo de credenciais
-- **Servidor**: Porta do servidor (padrão: 3000)
+A aplicação usa variáveis de ambiente para armazenar credenciais sensíveis de forma segura.
+
+1. **Copie o arquivo de exemplo:**
+   ```bash
+   cp env.example .env
+   ```
+
+2. **Edite o arquivo `.env`** e preencha com suas credenciais:
+   ```env
+   AZURE_CONNECTION_STRING=sua-connection-string-aqui
+   AZURE_ACCOUNT_NAME=seu-account-name
+   AZURE_ACCOUNT_KEY=sua-account-key
+   AZURE_CONTAINER_NAME=aluno-andrelss
+   GOOGLE_CREDENTIALS_PATH=./credentials.json
+   GOOGLE_DRIVE_FOLDER_ID=seu-folder-id
+   PORT=3000
+   ```
+
+⚠️ **IMPORTANTE**: O arquivo `.env` não é versionado e contém suas credenciais reais. Nunca commite este arquivo!
+
+### Configuração Manual
+
+Alternativamente, você pode editar o arquivo `config.js` diretamente, mas **não commite credenciais** no código!
 
 ## 🎯 Uso
 
