@@ -187,5 +187,5 @@ ISC
 
 ## 👤 Autor
 
-Desenvolvido para Prova CNII P2
+Desenvolvido por André Lucas Souza Silva para um trabalho acadêmico
 
