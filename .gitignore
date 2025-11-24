@@ -1,0 +1,8 @@
+node_modules/
+credentials.json
+.env
+*.log
+.DS_Store
+.vscode/
+.idea/
+

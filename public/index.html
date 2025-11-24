@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transferência Google Drive → Azure Blob Storage</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .section h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 600;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: white;
+        }
+
+        .btn-primary {
+            background: #667eea;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-success {
+            background: #28a745;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+        }
+
+        .btn-info {
+            background: #17a2b8;
+        }
+
+        .btn-info:hover {
+            background: #138496;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(23, 162, 184, 0.4);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .results {
+            margin-top: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .file-item {
+            padding: 10px;
+            margin-bottom: 8px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border-left: 3px solid #667eea;
+        }
+
+        .file-item.success {
+            border-left-color: #28a745;
+        }
+
+        .file-item.error {
+            border-left-color: #dc3545;
+        }
+
+        .file-item.skipped {
+            border-left-color: #ffc107;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status.skipped {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .summary {
+            margin-top: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 5px;
+            border: 2px solid #667eea;
+        }
+
+        .summary h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .summary-item:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔄 Transferência de Arquivos</h1>
+            <p>Google Drive → Azure Blob Storage</p>
+        </div>
+
+        <div class="content">
+            <!-- Seção de Configuração -->
+            <div class="section">
+                <h2>⚙️ Configuração</h2>
+                <div class="form-group">
+                    <label for="folderId">ID da Pasta do Google Drive:</label>
+                    <input type="text" id="folderId" placeholder="Cole o ID da pasta aqui ou deixe vazio para usar a configuração padrão">
+                </div>
+                <div class="form-group">
+                    <label for="folderName">Ou busque pelo nome da pasta:</label>
+                    <input type="text" id="folderName" placeholder="Digite o nome da pasta">
+                </div>
+                <div class="button-group">
+                    <button class="btn-info" onclick="findFolder()">🔍 Buscar Pasta</button>
+                </div>
+            </div>
+
+            <!-- Seção de Listagem -->
+            <div class="section">
+                <h2>📋 Listar Arquivos</h2>
+                <div class="button-group">
+                    <button class="btn-primary" onclick="listDriveFiles()">📁 Listar Google Drive</button>
+                    <button class="btn-primary" onclick="listBlobFiles()">📦 Listar Blob Storage</button>
+                </div>
+                <div id="listResults" class="results" style="display: none;"></div>
+            </div>
+
+            <!-- Seção de Transferência -->
+            <div class="section">
+                <h2>🚀 Transferir Arquivos</h2>
+                <div class="button-group">
+                    <button class="btn-success" onclick="transferFiles()">▶️ Iniciar Transferência</button>
+                </div>
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p style="margin-top: 10px;">Processando...</p>
+                </div>
+                <div id="transferResults" class="results" style="display: none;"></div>
+                <div id="transferSummary" class="summary" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Buscar pasta pelo nome
+        async function findFolder() {
+            const folderName = document.getElementById('folderName').value;
+            if (!folderName) {
+                alert('Por favor, digite o nome da pasta');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/drive/find-folder?name=${encodeURIComponent(folderName)}`);
+                const data = await response.json();
+                
+                if (data.success && data.folderId) {
+                    document.getElementById('folderId').value = data.folderId;
+                    alert(`Pasta encontrada! ID: ${data.folderId}`);
+                } else {
+                    alert('Pasta não encontrada');
+                }
+            } catch (error) {
+                alert('Erro ao buscar pasta: ' + error.message);
+            }
+        }
+
+        // Listar arquivos do Google Drive
+        async function listDriveFiles() {
+            const folderId = document.getElementById('folderId').value;
+            const resultsDiv = document.getElementById('listResults');
+            resultsDiv.style.display = 'block';
+            resultsDiv.innerHTML = '<p>Carregando...</p>';
+
+            try {
+                const url = folderId 
+                    ? `/api/drive/files?folderId=${encodeURIComponent(folderId)}`
+                    : '/api/drive/files';
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (data.success) {
+                    if (data.files.length === 0) {
+                        resultsDiv.innerHTML = '<p>Nenhum arquivo encontrado.</p>';
+                    } else {
+                        let html = `<h3>Arquivos no Google Drive (${data.count}):</h3>`;
+                        data.files.forEach((file, index) => {
+                            const size = file.size ? `${(parseInt(file.size) / 1024).toFixed(2)} KB` : 'N/A';
+                            html += `
+                                <div class="file-item">
+                                    <strong>${index + 1}. ${file.name}</strong>
+                                    <br><small>Tamanho: ${size} | Tipo: ${file.mimeType || 'N/A'}</small>
+                                </div>
+                            `;
+                        });
+                        resultsDiv.innerHTML = html;
+                    }
+                } else {
+                    resultsDiv.innerHTML = `<p style="color: red;">Erro: ${data.error}</p>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<p style="color: red;">Erro: ${error.message}</p>`;
+            }
+        }
+
+        // Listar arquivos do Blob Storage
+        async function listBlobFiles() {
+            const resultsDiv = document.getElementById('listResults');
+            resultsDiv.style.display = 'block';
+            resultsDiv.innerHTML = '<p>Carregando...</p>';
+
+            try {
+                const response = await fetch('/api/blob/files');
+                const data = await response.json();
+
+                if (data.success) {
+                    if (data.files.length === 0) {
+                        resultsDiv.innerHTML = '<p>Nenhum arquivo encontrado no Blob Storage.</p>';
+                    } else {
+                        let html = `<h3>Arquivos no Azure Blob Storage (${data.count}):</h3>`;
+                        data.files.forEach((file) => {
+                            const size = file.size ? `${(file.size / 1024).toFixed(2)} KB` : 'N/A';
+                            const date = file.lastModified 
+                                ? new Date(file.lastModified).toLocaleString('pt-BR')
+                                : 'N/A';
+                            html += `
+                                <div class="file-item">
+                                    <strong>${file.name}</strong>
+                                    <br><small>Tamanho: ${size} | Modificado: ${date}</small>
+                                </div>
+                            `;
+                        });
+                        resultsDiv.innerHTML = html;
+                    }
+                } else {
+                    resultsDiv.innerHTML = `<p style="color: red;">Erro: ${data.error}</p>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<p style="color: red;">Erro: ${error.message}</p>`;
+            }
+        }
+
+        // Transferir arquivos
+        async function transferFiles() {
+            const folderId = document.getElementById('folderId').value;
+            const loadingDiv = document.getElementById('loading');
+            const resultsDiv = document.getElementById('transferResults');
+            const summaryDiv = document.getElementById('transferSummary');
+
+            loadingDiv.classList.add('active');
+            resultsDiv.style.display = 'none';
+            summaryDiv.style.display = 'none';
+
+            try {
+                const body = folderId ? { folderId } : {};
+                const response = await fetch('/api/transfer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+
+                const data = await response.json();
+                loadingDiv.classList.remove('active');
+
+                if (data.success) {
+                    const report = data.report;
+                    
+                    // Exibe detalhes
+                    resultsDiv.style.display = 'block';
+                    let html = '<h3>Detalhes da Transferência:</h3>';
+                    report.details.forEach((detail) => {
+                        html += `
+                            <div class="file-item ${detail.status}">
+                                <strong>${detail.fileName}</strong>
+                                <span class="status ${detail.status}">${detail.status.toUpperCase()}</span>
+                                <br><small>${detail.message}</small>
+                            </div>
+                        `;
+                    });
+                    resultsDiv.innerHTML = html;
+
+                    // Exibe resumo
+                    summaryDiv.style.display = 'block';
+                    summaryDiv.innerHTML = `
+                        <h3>📊 Resumo</h3>
+                        <div class="summary-item">
+                            <span>Total de arquivos:</span>
+                            <strong>${report.total}</strong>
+                        </div>
+                        <div class="summary-item">
+                            <span>✅ Sucessos:</span>
+                            <strong style="color: #28a745;">${report.success}</strong>
+                        </div>
+                        <div class="summary-item">
+                            <span>❌ Erros:</span>
+                            <strong style="color: #dc3545;">${report.errors}</strong>
+                        </div>
+                    `;
+                } else {
+                    resultsDiv.style.display = 'block';
+                    resultsDiv.innerHTML = `<p style="color: red;">Erro: ${data.error}</p>`;
+                }
+            } catch (error) {
+                loadingDiv.classList.remove('active');
+                resultsDiv.style.display = 'block';
+                resultsDiv.innerHTML = `<p style="color: red;">Erro: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
+
