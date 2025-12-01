@@ -1,6 +1,6 @@
 # Transferência Google Drive → Azure Blob Storage
 
-Aplicação JavaScript para copiar arquivos de uma pasta específica do Google Drive para um contêiner no Azure Blob Storage.
+Aplicação JavaScript para copiar arquivos de uma pasta específica do Google Drive para um contêiner no Azure Blob Storage. Feito para um trabalho academico. 
 
 ## 📋 Requisitos
 
