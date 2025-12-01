@@ -187,5 +187,5 @@ ISC
 
 ## 👤 Autor
 
-Desenvolvido por André Lucas Souza Silva para um trabalho acadêmico
+Desenvolvido por André Lucas Souza Silva 
 
